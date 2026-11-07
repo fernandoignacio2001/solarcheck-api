@@ -31,9 +31,9 @@ MEDIA = np.array([0.485, 0.456, 0.406], dtype=np.float32)
 DESV = np.array([0.229, 0.224, 0.225], dtype=np.float32)
 
 # Carga del modelo una sola vez, al iniciar el servicio
-with open(ROOT / "modelo" / "clases.json", encoding="utf-8") as f:
+with open(ROOT / "clases.json", encoding="utf-8") as f:
     CLASES = json.load(f)["clases"]
-SESION = ort.InferenceSession(str(ROOT / "modelo" / "modelo.onnx"))
+SESION = ort.InferenceSession(str(ROOT / "modelo.onnx"))
 
 app = FastAPI(title="SolarCheck API")
 
