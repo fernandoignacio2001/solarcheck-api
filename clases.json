@@ -1,0 +1,12 @@
+{
+  "clases": [
+    "Bird-drop",
+    "Clean",
+    "Dusty",
+    "Electrical-damage",
+    "Physical-Damage",
+    "Snow-Covered"
+  ],
+  "test_accuracy": 0.74,
+  "test_balanced_accuracy": 0.768
+}
