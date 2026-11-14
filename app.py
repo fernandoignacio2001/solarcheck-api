@@ -26,13 +26,15 @@ NOMBRES = {
     "Snow-Covered": "Cubierto de nieve",
 }
 
-# Normalización ImageNet: la misma usada al entrenar
-MEDIA = np.array([0.485, 0.456, 0.406], dtype=np.float32)
-DESV = np.array([0.229, 0.224, 0.225], dtype=np.float32)
-
-# Carga del modelo una sola vez, al iniciar el servicio
+# Carga del modelo una sola vez, al iniciar el servicio.
+# clases.json (generado en Colab) trae las clases, el nombre del modelo, sus métricas en test
+# y la normalización propia del modelo (ImageNet para EfficientNet, 0.5 para ViT).
 with open(ROOT / "clases.json", encoding="utf-8") as f:
-    CLASES = json.load(f)["clases"]
+    META = json.load(f)
+CLASES = META["clases"]
+MEDIA = np.array(META.get("mean", [0.485, 0.456, 0.406]), dtype=np.float32)
+DESV = np.array(META.get("std", [0.229, 0.224, 0.225]), dtype=np.float32)
+NOMBRE_MODELO = META.get("modelo", "EfficientNet-B0")
 SESION = ort.InferenceSession(str(ROOT / "modelo.onnx"))
 
 app = FastAPI(title="SolarCheck API")
@@ -55,7 +57,8 @@ def softmax(z: np.ndarray) -> np.ndarray:
 @app.get("/")
 def estado():
     """Sirve para comprobar que el servicio está encendido."""
-    return {"estado": "ok", "modelo": "EfficientNet-B0 (ONNX)", "clases": CLASES}
+    return {"estado": "ok", "modelo": NOMBRE_MODELO, "test_accuracy": META.get("test_accuracy"),
+            "test_balanced_accuracy": META.get("test_balanced_accuracy"), "clases": CLASES}
 
 
 @app.post("/predict")
@@ -79,5 +82,5 @@ async def predecir(file: UploadFile = File(...)):
         "confianza": confianza,
         "requiere_revision_humana": confianza < UMBRAL_CONFIANZA,
         "probabilidades": {NOMBRES.get(c, c): round(float(p), 4) for c, p in zip(CLASES, probs)},
-        "modelo": "EfficientNet-B0 (balanced accuracy test 0.768)",
+        "modelo": f"{NOMBRE_MODELO} (balanced accuracy test {META.get('test_balanced_accuracy')})",
     }
